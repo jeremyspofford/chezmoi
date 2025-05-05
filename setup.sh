@@ -6,7 +6,7 @@ set -euo pipefail
 # Constants and Configuration
 # ============================================================================ #
 
-
+repo_root=$(git rev-parse --show-toplevel)
 
 # ============================================================================ #
 # Utility Functions
@@ -84,7 +84,7 @@ generate_ssh_key() {
 run_ansible_and_continue() {
   if command -v ansible >/dev/null; then
     log "Running Ansible playbook..."
-    ansible-playbook -i ~/dotfiles/ansible/inventory.ini ~/dotfiles/ansible/setup.yml
+    ansible-playbook -i "${repo_root}/ansible/inventory.ini" "${repo_root}/ansible/setup.yml"
   fi
 }
 
@@ -105,9 +105,9 @@ main() {
     fi
   fi
 
-  generate_ssh_key
   detect_os_and_install_ansible
   run_ansible_and_continue
+  generate_ssh_key
   source ~/.zshrc
 
   log "✅ Full bootstrap complete!"
