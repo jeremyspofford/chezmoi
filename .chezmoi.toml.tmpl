@@ -1,0 +1,21 @@
+{{- $email := promptString "email" -}}
+{{- $name := promptString "name" -}}
+
+[data]
+    email = {{ $email | quote }}
+    name = {{ $name | quote }}
+    onepassword.enable = true
+
+[onepassword]
+    command = "op"
+
+[edit]
+    command = "nvim"
+
+[diff]
+    command = "nvim"
+    args = ["-d"]
+
+[merge]
+    command = "nvim"
+    args = ["-d"] 

@@ -1,0 +1,88 @@
+---
+- name: Add 1Password apt repository key
+  ansible.builtin.get_url:
+    url: https://downloads.1password.com/linux/keys/1password.asc
+    dest: /usr/share/keyrings/1password-archive-keyring.asc
+  become: true
+
+- name: Add 1Password repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.asc] https://downloads.1password.com/linux/debian/amd64 stable main"
+    state: present
+    filename: 1password
+  become: true
+
+- name: Install 1Password CLI
+  ansible.builtin.apt:
+    name: 1password-cli
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Check if 1Password is configured
+  ansible.builtin.command:
+    cmd: op whoami
+  register: op_account_check
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
+
+- name: Check if 1Password CLI is installed
+  ansible.builtin.command:
+    cmd: which op
+  register: op_installed_check
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
+
+- name: Display 1Password setup instructions
+  ansible.builtin.pause:
+    prompt: |
+      Please set up 1Password CLI manually before continuing:
+      
+      1. Run 'op account add' in another terminal
+      2. Run 'eval $(op signin)' to sign in
+      3. Press return here once complete
+    when: op_installed_check.rc != 0
+
+- name: Ensure eval is in ~/.zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.zshrc"
+    line: 'eval "$(op signin)"'
+    state: present
+
+- name: Ensure .ssh directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh"
+    state: directory
+    mode: '0700'
+
+- name: Get SSH key from 1Password
+  ansible.builtin.command:
+    cmd: op read "op://Personal/SSH Key/private key"
+    creates: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+  register: ssh_key
+  no_log: true
+  when: op_verify.rc == 0 or op_account_check.rc == 0
+
+- name: Save SSH private key
+  ansible.builtin.copy:
+    content: "{{ ssh_key.stdout }}"
+    dest: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+    mode: '0600'
+  when: ssh_key.changed and (op_verify.rc == 0 or op_account_check.rc == 0)
+
+- name: Get SSH public key from 1Password
+  ansible.builtin.command:
+    cmd: op read "op://Personal/SSH Key/public key"
+    creates: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
+  register: ssh_pub_key
+  no_log: true
+  when: op_verify.rc == 0 or op_account_check.rc == 0
+
+- name: Save SSH public key
+  ansible.builtin.copy:
+    content: "{{ ssh_pub_key.stdout }}"
+    dest: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
+    mode: '0644'
+  when: ssh_pub_key.changed and (op_verify.rc == 0 or op_account_check.rc == 0) 

@@ -1,0 +1,60 @@
+---
+- name: Include package variables
+  ansible.builtin.include_vars:
+    file: main.yml
+
+- name: Detect OS family
+  ansible.builtin.set_fact: # Set facts allows ust o create variables that we can use later
+    is_mac: "{{ ansible_os_family == 'Darwin' }}"
+    is_debian: "{{ ansible_os_family == 'Debian' }}"
+
+- name: Install Homebrew (macOS)
+  when: is_mac
+  shell: |
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  args:
+    creates: /usr/local/bin/brew
+
+- name: Install macOS packages
+  when: is_mac
+  community.general.homebrew:
+    name: "{{ common_packages + mac_specific }}"
+    state: present
+  become: true
+
+- name: Install Debian packages
+  when: is_debian
+  ansible.builtin.package:
+    name: "{{ common_packages + debian_specific }}"
+    state: present
+  become: true
+
+# - name: Install Starship prompt
+#   ansible.builtin.shell: |
+#     curl -sS https://starship.rs/install.sh | sh -s -- -y
+#   args:
+#     creates: /usr/local/bin/starship
+
+# - name: Add Starship init to .zshrc
+#   become: false
+#   ansible.builtin.lineinfile:
+#     path: "${{ ansible_env.HOME }}/.zshrc"
+#     line: 'eval "$(starship init zsh)"'
+#     create: yes
+
+# - name: Install chezmoi
+#   become: false
+#   ansible.builtin.shell: |
+#     sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jeremyspofford
+#   args:
+#     creates: /usr/local/bin/chezmoi
+#   tags: [chezmoi]
+
+# - name: Initialize chezmoi with your repo
+#   ansible.builtin.command:
+#     cmd: chezmoi init --apply git@github.com:jeremyspofford/dotfiles.git
+#   args:
+#     creates: ~/.local/share/chezmoi
+#   tags: [chezmoi]
+
+

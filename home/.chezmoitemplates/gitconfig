@@ -1,0 +1,24 @@
+[user]
+    email = {{ .email }}
+    name = {{ .name }}
+    {{- if .onepassword.enable }}
+    signingkey = {{ onepasswordRead "op://Personal/GPG Key/public key" }}
+    {{- end }}
+
+[core]
+    editor = nvim
+    excludesfile = ~/.gitignore
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    default = current
+
+{{- if .onepassword.enable }}
+[commit]
+    gpgsign = true
+{{- end }} 

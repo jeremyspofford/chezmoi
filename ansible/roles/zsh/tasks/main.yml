@@ -1,0 +1,32 @@
+---
+- name: Ensure Zsh is installed
+  ansible.builtin.package:
+    name: zsh
+    state: present
+
+- name: Ensure ~/.zshrc exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.zshrc"
+    state: touch
+    mode: '0644'
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+
+- name: Set zsh as default shell
+  user:
+    name: "${{ ansible_user_id }}"
+    shell: /bin/zsh
+  become: true
+
+- name: Add ~/.local/bin to PATH in ~/.zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.zshrc"
+    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    insertafter: EOF
+    state: present
+
+# - name: Add 1Password eval to ~/.zshrc
+#   ansible.builtin.lineinfile:
+#     path: "{{ ansible_env.HOME }}/.zshrc"
+#     line: 'eval "$(op signin)"'
+#     state: present

@@ -1,0 +1,25 @@
+---
+common_packages:
+  - bat
+  - curl
+  - fzf
+  - git
+  - neovim
+  - ripgrep
+  - stow
+  - tmux
+  - tree
+  - zsh
+
+debian_specific:
+  - build-essential
+  - gnupg
+  - htop
+  - jq
+  - locate
+  - unzip
+  - xclip
+  - zoxide
+
+mac_specific:
+  - coreutils 

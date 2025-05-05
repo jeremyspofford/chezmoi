@@ -1,0 +1,30 @@
+---
+- name: Ensure ~/.local/bin directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/bin"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+
+
+- name: Install Chezmoi
+  ansible.builtin.shell: |
+    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b {{ ansible_env.HOME }}/.local/bin
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
+
+- name: Create Chezmoi config directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/chezmoi"
+    state: directory
+    mode: '0755'
+
+# - name: Initialize chezmoi and apply dotfiles
+#   ansible.builtin.command:
+#     cmd: "{{ ansible_env.HOME }}/.local/bin/chezmoi init --apply jeremyspofford"
+#   environment:
+#     PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
+#   args:
+#     creates: "{{ ansible_env.HOME }}/.local/share/chezmoi"
+#   become: false
